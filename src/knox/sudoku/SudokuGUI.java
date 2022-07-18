@@ -6,13 +6,19 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.Collection;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -76,6 +82,9 @@ public class SudokuGUI extends JFrame {
     
     // 2D array of buttons; each sudoku square is a button
     private JButton[][] buttons = new JButton[numRows][numCols];
+
+	//show legal values right click
+		private boolean showLegVal = false;
     
     private class MyKeyListener extends KeyAdapter {
     	public final int row;
@@ -133,6 +142,11 @@ public class SudokuGUI extends JFrame {
 				// we can try to enter a value in a 
 				currentRow = row;
 				currentCol = col;
+
+				if (showLegVal){
+					Collection<Integer> legals = sudoku.getLegalValues(row, col);
+					JOptionPane.showMessageDialog(null, legals.toString());
+				}
 				
 				// TODO: figure out some way that users can enter values
 				// A simple way to do this is to take keyboard input
@@ -218,14 +232,21 @@ public class SudokuGUI extends JFrame {
         addToMenu(file, "Save", new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+				String board = sudoku.toFileString();
+				JFileChooser jfc = new JFileChooser(new File(","));
+				int returnValue = jfc.showSaveDialog(null);
+
+				if(returnValue == JFileChooser.APPROVE_OPTION){
+					File selectedFile = jfc.getSelectedFile();
+					Util.writeToFile(selectedFile, board);
+					System.out.println(selectedFile.getAbsolutePath());
+				}
             	// TODO: save the current game to a file!
             	// HINT: Check the Util.java class for helpful methods
             	// HINT: check out JFileChooser
             	// https://docs.oracle.com/javase/tutorial/uiswing/components/filechooser.html
             	JOptionPane.showMessageDialog(null,
-            		    "TODO: save the current game to a file!\n"
-            		    + "HINT: Check the Util.java class for helpful methods"
-            		    + "HINT: Check out JFileChooser");
+            		    "game saved");
                 update();
             }
         });
@@ -233,16 +254,22 @@ public class SudokuGUI extends JFrame {
         addToMenu(file, "Load", new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+				String board = sudoku.toFileString();
+				JFileChooser jfc = new JFileChooser(new File(","));
+				int returnValue = jfc.showOpenDialog(null);
+
+				if(returnValue == JFileChooser.APPROVE_OPTION){
+					File selectedFile = jfc.getSelectedFile();
+					sudoku.load(selectedFile);
             	// TODO: load a saved game from a file
             	// HINT: Check the Util.java class for helpful methods
             	// HINT: check out JFileChooser
             	// https://docs.oracle.com/javase/tutorial/uiswing/components/filechooser.html
             	JOptionPane.showMessageDialog(null,
-            		    "TODO: load a saved game from a file\n"
-            		    + "HINT: Check the Util.java class for helpful methods\n"
-            		    + "HINT: Check out JFileChooser");
+            		    "loaded game from file"+ selectedFile.getAbsolutePath());
                 update();
             }
+		}
         });
         
         //
@@ -268,6 +295,18 @@ public class SudokuGUI extends JFrame {
 						"which is the square where the fewest posssible values can go");
 			}
 		});
+		JMenuItem menuItem = new JCheckBoxMenuItem("Legal Values");
+		help.add(menuItem);
+		menuItem.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				showLegVal = !showLegVal;
+			}
+		});
+
+
+
+
         
         this.setJMenuBar(menuBar);
     }
